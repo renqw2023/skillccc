@@ -7,6 +7,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cron from 'node-cron';
 import { loadCache, fullSync, quickSync } from './github-sync.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -352,6 +353,40 @@ app.listen(PORT, () => {
             console.log('📭 No cached data. Run "npm run sync" to fetch data.');
         }
     });
+
+    // Setup automatic sync with node-cron
+    const token = process.env.GITHUB_TOKEN || null;
+
+    // Daily full sync at 3:00 AM
+    cron.schedule('0 3 * * *', async () => {
+        console.log('🔄 [Auto Sync] Daily full sync started (3:00 AM)');
+        try {
+            const cache = await fullSync(token);
+            skillsCache = cache;
+            lastCacheLoad = Date.now();
+            console.log(`✅ [Auto Sync] Full sync completed: ${cache.count} skills`);
+        } catch (error) {
+            console.error('❌ [Auto Sync] Full sync failed:', error.message);
+        }
+    });
+
+    // Incremental sync every 2 hours
+    cron.schedule('0 */2 * * *', async () => {
+        console.log('⚡ [Auto Sync] Incremental sync started (every 2 hours)');
+        try {
+            const cache = await quickSync(token);
+            skillsCache = cache;
+            lastCacheLoad = Date.now();
+            console.log('✅ [Auto Sync] Quick sync completed');
+        } catch (error) {
+            console.error('❌ [Auto Sync] Quick sync failed:', error.message);
+        }
+    });
+
+    console.log('\n⏰ Auto sync scheduled:');
+    console.log('   📅 Full sync: Daily at 3:00 AM');
+    console.log('   ⚡ Quick sync: Every 2 hours');
+    console.log('');
 });
 
 export default app;
