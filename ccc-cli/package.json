@@ -1,0 +1,40 @@
+{
+    "name": "@renwin/ccc",
+    "version": "1.0.2",
+    "description": "CLI tool for installing AI Agent Skills from www.ccc.onl",
+    "type": "module",
+    "main": "index.js",
+    "bin": {
+        "ccc": "bin/cli.js"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "clawhub",
+        "ai",
+        "skills",
+        "cli",
+        "agent"
+    ],
+    "author": "renwin <renqw2022@gmail.com>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/renqw2023/skills.git"
+    },
+    "homepage": "https://www.ccc.onl",
+    "bugs": {
+        "url": "https://github.com/renqw2023/skills/issues"
+    },
+    "dependencies": {
+        "commander": "^11.1.0",
+        "node-fetch": "^3.3.2",
+        "adm-zip": "^0.5.10",
+        "chalk": "^5.3.0",
+        "ora": "^8.0.1"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
