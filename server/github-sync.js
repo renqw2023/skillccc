@@ -235,58 +235,101 @@ export async function fullSync(token = null) {
 }
 
 /**
- * Quick sync: fetch only recent updates (last N users or specific paths)
- * For webhook-triggered updates
+ * Quick sync: fetch only recent updates
+ * If no paths provided, fetches recent commits to detect updates
  */
 export async function quickSync(paths = [], token = null) {
-    console.log(`🔄 Quick sync for ${paths.length} paths...`);
+    console.log('⚡ Quick sync starting...');
 
     const cache = await loadCache();
     const skillsMap = new Map(cache.skills.map(s => [s.id, s]));
+    let updatedCount = 0;
 
-    for (const skillPath of paths) {
-        // skillPath format: "skills/username/skill-name"
-        const parts = skillPath.split('/');
-        if (parts.length >= 3 && parts[0] === 'skills') {
-            const username = parts[1];
-            const skillSlug = parts[2];
-            const fullPath = `${SKILLS_PATH}/${username}/${skillSlug}`;
+    // If no paths specified, get recent commits from GitHub API
+    if (paths.length === 0) {
+        console.log('🔍 Detecting recent updates from GitHub commits...');
+        try {
+            // Get recent commits (last 100)
+            const commitsUrl = `${GITHUB_API}/repos/${REPO_OWNER}/${REPO_NAME}/commits?per_page=100`;
+            const commits = await githubFetch(commitsUrl, token);
 
-            try {
-                const metaJson = await fetchRawFile(`${fullPath}/_meta.json`, token);
-                const meta = metaJson ? JSON.parse(metaJson) : null;
-
-                const skillMd = await fetchRawFile(`${fullPath}/SKILL.md`, token);
-                const skillData = parseSkillMd(skillMd);
-
-                const readme = await fetchRawFile(`${fullPath}/README.md`, token);
-
-                if (meta) {
-                    const id = `${username}/${skillSlug}`;
-                    skillsMap.set(id, {
-                        id,
-                        owner: username,
-                        slug: skillSlug,
-                        displayName: meta.displayName || skillData?.name || skillSlug,
-                        description: skillData?.description || '',
-                        version: meta.latest?.version || skillData?.version || '0.0.0',
-                        publishedAt: meta.latest?.publishedAt || null,
-                        commit: meta.latest?.commit || null,
-                        history: meta.history || [],
-                        readme: readme || null,
-                        skillMd: skillMd || null,
-                        body: skillData?.body || null
-                    });
-                    console.log(`✅ Updated ${id}`);
+            // Extract changed files from commits
+            const changedPaths = new Set();
+            for (const commit of commits) {
+                const commitDetail = await githubFetch(commit.url, token);
+                if (commitDetail.files) {
+                    for (const file of commitDetail.files) {
+                        const filePath = file.filename;
+                        // Only process files in skills directory
+                        if (filePath.startsWith('skills/') &&
+                            (filePath.endsWith('_meta.json') || filePath.endsWith('SKILL.md'))) {
+                            const parts = filePath.split('/');
+                            if (parts.length >= 3) {
+                                changedPaths.add(`${parts[1]}/${parts[2]}`);
+                            }
+                        }
+                    }
                 }
-            } catch (error) {
-                console.warn(`⚠️ Error updating ${skillPath}:`, error.message);
+                await sleep(100); // Rate limiting
             }
+
+            paths = Array.from(changedPaths);
+            console.log(`📦 Found ${paths.length} skills with recent updates`);
+
+        } catch (error) {
+            console.warn('⚠️  Could not fetch recent commits, skipping quick sync:', error.message);
+            console.log('💡 Tip: Set GITHUB_TOKEN for better rate limits');
+            return cache; // Return existing cache without updates
+        }
+    }
+
+    // Update specific paths
+    for (const skillPath of paths) {
+        const parts = skillPath.includes('/') ? skillPath.split('/') : ['', skillPath.split('/')[0], skillPath.split('/')[1]];
+        const username = parts[parts.length - 2] || parts[0];
+        const skillSlug = parts[parts.length - 1] || parts[1];
+        const fullPath = `${SKILLS_PATH}/${username}/${skillSlug}`;
+
+        try {
+            const metaJson = await fetchRawFile(`${fullPath}/_meta.json`, token);
+            const meta = metaJson ? JSON.parse(metaJson) : null;
+
+            const skillMd = await fetchRawFile(`${fullPath}/SKILL.md`, token);
+            const skillData = parseSkillMd(skillMd);
+
+            const readme = await fetchRawFile(`${fullPath}/README.md`, token);
+
+            if (meta) {
+                const id = `${username}/${skillSlug}`;
+                skillsMap.set(id, {
+                    id,
+                    owner: username,
+                    slug: skillSlug,
+                    displayName: meta.displayName || skillData?.name || skillSlug,
+                    description: skillData?.description || '',
+                    version: meta.latest?.version || skillData?.version || '0.0.0',
+                    publishedAt: meta.latest?.publishedAt || null,
+                    commit: meta.latest?.commit || null,
+                    history: meta.history || [],
+                    readme: readme || null,
+                    skillMd: skillMd || null,
+                    body: skillData?.body || null
+                });
+                updatedCount++;
+                console.log(`✅ Updated ${id}`);
+            }
+
+            await sleep(50); // Rate limiting
+        } catch (error) {
+            console.warn(`⚠️  Error updating ${username}/${skillSlug}:`, error.message);
         }
     }
 
     const skills = Array.from(skillsMap.values());
-    return await saveCache(skills);
+    const updatedCache = await saveCache(skills);
+
+    console.log(`✅ Quick sync completed: ${updatedCount} skills updated`);
+    return updatedCache;
 }
 
 export default {
