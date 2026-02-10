@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import SearchBar from '../components/SearchBar';
 import SkillCard from '../components/SkillCard';
 import InstallCard from '../components/InstallCard';
+import HighlightedSkills from '../components/HighlightedSkills';
 
 function HomePage() {
     const [skills, setSkills] = useState([]);
@@ -104,6 +105,9 @@ function HomePage() {
                     </div>
                 </div>
             </section>
+
+            {/* Highlighted Skills */}
+            <HighlightedSkills />
 
             {/* Skills Grid */}
             <section className="skills-section section">

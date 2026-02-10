@@ -496,6 +496,123 @@ code {
 }
 
 /* ============================================
+   Highlighted Skills Section
+   ============================================ */
+
+.highlighted-section {
+  margin: 64px auto 80px;
+  max-width: 1200px;
+  padding: 0 24px;
+}
+
+.highlighted-header {
+  margin-bottom: 32px;
+}
+
+.highlighted-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.highlighted-subtitle {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.highlighted-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.highlighted-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 180px;
+}
+
+.highlighted-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: var(--accent);
+}
+
+.highlighted-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--seafoam);
+  background: rgba(43, 198, 164, 0.12);
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.highlighted-skill-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.highlighted-skill-desc {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.highlighted-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .highlighted-badge {
+  color: #72ebe8;
+  background: rgba(114, 235, 232, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .highlighted-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .highlighted-section {
+    margin: 48px auto 60px;
+  }
+}
+
+/* ============================================
    Skill Detail Page
    ============================================ */
 

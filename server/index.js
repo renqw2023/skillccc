@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
 import { loadCache, fullSync, quickSync } from './github-sync.js';
+import { incrementDownload, loadDownloads, getDownloadStats } from './downloads.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -210,6 +211,10 @@ app.get('/api/skills/:owner/:slug/download', async (req, res) => {
         // Finalize archive
         await archive.finalize();
 
+        // Increment download count
+        const skillId = `${owner}/${slug}`;
+        await incrementDownload(skillId);
+
         console.log(`✅ Downloaded skill: ${owner}/${slug}`);
 
     } catch (error) {
@@ -240,6 +245,50 @@ app.get('/api/stats', async (req, res) => {
             }
         });
     } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/skills/highlighted
+ * Get top 10 most downloaded skills
+ */
+app.get('/api/skills/highlighted', async (req, res) => {
+    try {
+        const cache = await getSkillsCache();
+        const downloads = await loadDownloads();
+
+        // Merge download data with skills
+        const skillsWithDownloads = (cache.skills || []).map(skill => ({
+            ...skill,
+            downloadCount: downloads[skill.id]?.count || 0
+        }));
+
+        // Sort by download count and get top 10
+        const highlighted = skillsWithDownloads
+            .sort((a, b) => b.downloadCount - a.downloadCount)
+            .slice(0, 10);
+
+        res.json({ success: true, skills: highlighted });
+    } catch (error) {
+        console.error('Error fetching highlighted skills:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/skills/:owner/:slug/stats
+ * Get download statistics for a specific skill
+ */
+app.get('/api/skills/:owner/:slug/stats', async (req, res) => {
+    try {
+        const { owner, slug } = req.params;
+        const skillId = `${owner}/${slug}`;
+        const stats = await getDownloadStats(skillId);
+
+        res.json({ success: true, ...stats });
+    } catch (error) {
+        console.error('Error fetching stats:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
