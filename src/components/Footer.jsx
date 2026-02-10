@@ -34,7 +34,9 @@ function Footer() {
                         </a>
                         <span className="footer-separator">•</span>
                         <a
-                            href="mailto:contact@ccc.onl"
+                            href="https://x.com/renqw5271"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="footer-link"
                         >
                             Contact
