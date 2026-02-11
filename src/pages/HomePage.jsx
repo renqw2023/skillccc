@@ -16,15 +16,22 @@ function HomePage() {
         totalPages: 0
     });
     const [search, setSearch] = useState('');
+    const [sortBy, setSortBy] = useState('newest');
+    const [sortOrder, setSortOrder] = useState('desc');
+    const [viewMode, setViewMode] = useState('cards');
+    const [highlightedOnly, setHighlightedOnly] = useState(false);
 
     // Fetch skills
-    const fetchSkills = async (page = 1, searchQuery = '') => {
+    const fetchSkills = async (page = 1, searchQuery = '', sort = sortBy, order = sortOrder, highlighted = highlightedOnly) => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
                 page: page.toString(),
                 limit: '24',
-                ...(searchQuery && { search: searchQuery })
+                sort,
+                order,
+                ...(searchQuery && { search: searchQuery }),
+                ...(highlighted && { highlighted: 'true' })
             });
 
             const response = await fetch(`/api/skills?${params}`);
@@ -58,18 +65,35 @@ function HomePage() {
     };
 
     useEffect(() => {
-        fetchSkills(1, '');
+        fetchSkills(1, '', sortBy, sortOrder, highlightedOnly);
         fetchStats();
     }, []);
 
     const handleSearch = (query) => {
         setSearch(query);
-        fetchSkills(1, query);
+        fetchSkills(1, query, sortBy, sortOrder, highlightedOnly);
     };
 
     const handlePageChange = (newPage) => {
-        fetchSkills(newPage, search);
+        fetchSkills(newPage, search, sortBy, sortOrder, highlightedOnly);
         window.scrollTo({ top: 400, behavior: 'smooth' });
+    };
+
+    const handleSortChange = (newSort) => {
+        setSortBy(newSort);
+        fetchSkills(1, search, newSort, sortOrder, highlightedOnly);
+    };
+
+    const handleOrderToggle = () => {
+        const newOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        setSortOrder(newOrder);
+        fetchSkills(1, search, sortBy, newOrder, highlightedOnly);
+    };
+
+    const handleHighlightedToggle = () => {
+        const newVal = !highlightedOnly;
+        setHighlightedOnly(newVal);
+        fetchSkills(1, search, sortBy, sortOrder, newVal);
     };
 
     return (
@@ -124,6 +148,60 @@ function HomePage() {
                     </div>
                 </div>
 
+                {/* Toolbar: Sort + Filter + View */}
+                <div className="skills-toolbar">
+                    <div className="toolbar-left">
+                        {/* Sort Dropdown */}
+                        <div className="sort-group">
+                            <select
+                                className="sort-select"
+                                value={sortBy}
+                                onChange={(e) => handleSortChange(e.target.value)}
+                            >
+                                <option value="newest">Newest</option>
+                                <option value="updated">Recently updated</option>
+                                <option value="downloads">Downloads</option>
+                                <option value="name">Name</option>
+                            </select>
+                            <button
+                                className="sort-order-btn"
+                                onClick={handleOrderToggle}
+                                title={sortOrder === 'desc' ? 'Descending' : 'Ascending'}
+                            >
+                                {sortOrder === 'desc' ? '↓' : '↑'}
+                            </button>
+                        </div>
+
+                        {/* Highlighted Filter */}
+                        <button
+                            className={`filter-btn ${highlightedOnly ? 'active' : ''}`}
+                            onClick={handleHighlightedToggle}
+                        >
+                            ⭐ Highlighted
+                        </button>
+                    </div>
+
+                    <div className="toolbar-right">
+                        {/* View Mode Toggle */}
+                        <div className="view-toggle">
+                            <button
+                                className={`view-btn ${viewMode === 'cards' ? 'active' : ''}`}
+                                onClick={() => setViewMode('cards')}
+                                title="Cards view"
+                            >
+                                ▦
+                            </button>
+                            <button
+                                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setViewMode('list')}
+                                title="List view"
+                            >
+                                ☰
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="loading-container">
                         <div className="loading-spinner"></div>
@@ -145,15 +223,17 @@ function HomePage() {
                         <p className="empty-description">
                             {search
                                 ? `No skills match "${search}". Try a different search term.`
-                                : 'No skills available. Run "npm run sync" to fetch data from GitHub.'
+                                : highlightedOnly
+                                    ? 'No highlighted skills yet. Download some skills first!'
+                                    : 'No skills available. Run "npm run sync" to fetch data from GitHub.'
                             }
                         </p>
                     </div>
                 ) : (
                     <>
-                        <div className="skills-grid grid">
+                        <div className={viewMode === 'cards' ? 'skills-grid grid' : 'skills-list'}>
                             {skills.map((skill) => (
-                                <SkillCard key={skill.id} skill={skill} />
+                                <SkillCard key={skill.id} skill={skill} viewMode={viewMode} />
                             ))}
                         </div>
 

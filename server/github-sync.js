@@ -153,6 +153,7 @@ export async function fetchAllSkills(token = null, progressCallback = null) {
                             publishedAt: meta.latest?.publishedAt || null,
                             commit: meta.latest?.commit || null,
                             history: meta.history || [],
+                            license: skillData?.license || null,
                             readme: readme || null,
                             skillMd: skillMd || null,
                             body: skillData?.body || null
@@ -314,6 +315,7 @@ export async function quickSync(paths = [], token = null) {
                     publishedAt: meta.latest?.publishedAt || null,
                     commit: meta.latest?.commit || null,
                     history: meta.history || [],
+                    license: skillData?.license || null,
                     readme: readme || null,
                     skillMd: skillMd || null,
                     body: skillData?.body || null

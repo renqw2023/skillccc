@@ -1660,3 +1660,288 @@ code {
     font-size: 0.8rem;
   }
 }
+
+/* ============================================
+   Theme Switcher
+   ============================================ */
+
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+  margin-left: 8px;
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--ink-soft);
+}
+
+.theme-btn:hover {
+  background: var(--surface);
+}
+
+.theme-btn.active {
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  color: var(--ink);
+}
+
+/* ============================================
+   Skills Toolbar (Sort / Filter / View)
+   ============================================ */
+
+.skills-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 0 24px;
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sort Group */
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sort-select {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: auto;
+}
+
+.sort-select:focus {
+  border-color: rgba(255, 107, 74, 0.6);
+  box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.12);
+}
+
+.sort-order-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--ink-soft);
+}
+
+.sort-order-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Filter Button */
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-btn.active {
+  background: rgba(255, 107, 74, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--ink-soft);
+}
+
+.view-btn:hover {
+  background: var(--surface);
+}
+
+.view-btn.active {
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  color: var(--ink);
+}
+
+/* ============================================
+   Skills List View
+   ============================================ */
+
+.skills-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-card.list-mode {
+  min-height: auto;
+  padding: 14px 20px;
+}
+
+.skill-card.list-mode .skill-card-content {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.skill-card.list-mode .skill-header {
+  min-width: 200px;
+  max-width: 260px;
+  flex-shrink: 0;
+}
+
+.skill-card.list-mode .skill-description {
+  flex: 1;
+  -webkit-line-clamp: 1;
+  margin: 0;
+}
+
+.skill-card.list-mode .skill-footer {
+  margin-top: 0;
+  flex-shrink: 0;
+  gap: 16px;
+}
+
+/* ============================================
+   Skill Card Metrics
+   ============================================ */
+
+.skill-metrics {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+/* ============================================
+   License Badge
+   ============================================ */
+
+.license-badge {
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: rgba(240, 196, 106, 0.15);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] .license-badge {
+  color: #f3c97a;
+  background: rgba(243, 201, 122, 0.15);
+}
+
+/* ============================================
+   Responsive Toolbar
+   ============================================ */
+
+@media (max-width: 768px) {
+  .skills-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-left,
+  .toolbar-right {
+    justify-content: center;
+  }
+
+  .skill-card.list-mode .skill-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .skill-card.list-mode .skill-header {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .theme-switcher {
+    margin-left: 4px;
+  }
+}

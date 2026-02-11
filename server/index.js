@@ -45,14 +45,28 @@ async function getSkillsCache(forceRefresh = false) {
 
 /**
  * Search and filter skills
+ * @param {Array} skills - All skills
+ * @param {Object} options - Filter options
  */
-function filterSkills(skills, query = '', page = 1, limit = 24) {
-    let filtered = skills;
+function filterSkills(skills, { query = '', page = 1, limit = 24, sort = 'newest', order = 'desc', highlighted = false, downloads = {} } = {}) {
+    let filtered = [...skills];
+
+    // Merge download counts
+    filtered = filtered.map(s => ({
+        ...s,
+        downloadCount: downloads[s.id]?.count || 0,
+        versionCount: (s.history || []).length
+    }));
+
+    // Highlighted filter: only skills with downloads
+    if (highlighted) {
+        filtered = filtered.filter(s => s.downloadCount > 0);
+    }
 
     // Search filter
     if (query) {
         const q = query.toLowerCase();
-        filtered = skills.filter(s =>
+        filtered = filtered.filter(s =>
             s.displayName?.toLowerCase().includes(q) ||
             s.description?.toLowerCase().includes(q) ||
             s.owner?.toLowerCase().includes(q) ||
@@ -60,8 +74,23 @@ function filterSkills(skills, query = '', page = 1, limit = 24) {
         );
     }
 
-    // Sort by publishedAt (newest first)
-    filtered.sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+    // Sort
+    const dir = order === 'asc' ? 1 : -1;
+    switch (sort) {
+        case 'downloads':
+            filtered.sort((a, b) => dir * ((b.downloadCount || 0) - (a.downloadCount || 0)));
+            break;
+        case 'name':
+            filtered.sort((a, b) => dir * (a.displayName || a.slug || '').localeCompare(b.displayName || b.slug || ''));
+            break;
+        case 'updated':
+            filtered.sort((a, b) => dir * ((b.publishedAt || 0) - (a.publishedAt || 0)));
+            break;
+        case 'newest':
+        default:
+            filtered.sort((a, b) => dir * ((b.publishedAt || 0) - (a.publishedAt || 0)));
+            break;
+    }
 
     // Pagination
     const total = filtered.length;
@@ -92,14 +121,21 @@ function filterSkills(skills, query = '', page = 1, limit = 24) {
  */
 app.get('/api/skills', async (req, res) => {
     try {
-        const { search = '', page = 1, limit = 24 } = req.query;
+        const { search = '', page = 1, limit = 24, sort = 'newest', order = 'desc', highlighted = 'false' } = req.query;
         const cache = await getSkillsCache();
+        const downloads = await loadDownloads();
 
         const result = filterSkills(
             cache.skills || [],
-            search,
-            parseInt(page),
-            parseInt(limit)
+            {
+                query: search,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                sort,
+                order,
+                highlighted: highlighted === 'true',
+                downloads
+            }
         );
 
         res.json({

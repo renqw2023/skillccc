@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 
-function SkillCard({ skill }) {
+function SkillCard({ skill, viewMode = 'cards' }) {
     const {
         owner,
         slug,
         displayName,
         description,
         version,
-        publishedAt
+        publishedAt,
+        downloadCount,
+        versionCount
     } = skill;
 
     // Format date
@@ -26,13 +28,24 @@ function SkillCard({ skill }) {
         return date.toLocaleDateString();
     };
 
+    // Format large numbers
+    const formatCount = (count) => {
+        if (!count && count !== 0) return '0';
+        if (count >= 1000) {
+            return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+        }
+        return count.toString();
+    };
+
     // Get initials for avatar
     const getInitials = (name) => {
         return name.slice(0, 2).toUpperCase();
     };
 
+    const isList = viewMode === 'list';
+
     return (
-        <Link to={`/skill/${owner}/${slug}`} className="skill-card">
+        <Link to={`/skill/${owner}/${slug}`} className={`skill-card ${isList ? 'list-mode' : ''}`}>
             <div className="skill-card-content">
                 <div className="skill-header">
                     <h3 className="skill-name">{displayName || slug}</h3>
@@ -50,7 +63,17 @@ function SkillCard({ skill }) {
                         <span className="author-avatar">{getInitials(owner)}</span>
                         <span>{owner}</span>
                     </div>
-                    <span className="skill-date">{formatDate(publishedAt)}</span>
+
+                    <div className="skill-metrics">
+                        <span className="metric-item" title="Downloads">
+                            ↓ {formatCount(downloadCount)}
+                        </span>
+                        {(versionCount || (skill.history && skill.history.length > 0)) && (
+                            <span className="metric-item" title="Versions">
+                                ↑ {versionCount || skill.history?.length || 0}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </Link>

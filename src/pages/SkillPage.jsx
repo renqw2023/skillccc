@@ -128,6 +128,13 @@ function SkillPage() {
                                         <span>{formatDate(skill.publishedAt)}</span>
                                     </div>
                                 )}
+
+                                {skill.license && (
+                                    <div className="meta-item">
+                                        <span>📜</span>
+                                        <span className="license-badge">{skill.license}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {skill.description && (
