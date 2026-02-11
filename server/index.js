@@ -410,7 +410,7 @@ app.listen(PORT, () => {
     cron.schedule('0 */2 * * *', async () => {
         console.log('⚡ [Auto Sync] Incremental sync started (every 2 hours)');
         try {
-            const cache = await quickSync(token);
+            const cache = await quickSync([], token);
             skillsCache = cache;
             lastCacheLoad = Date.now();
             console.log('✅ [Auto Sync] Quick sync completed');

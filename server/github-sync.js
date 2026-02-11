@@ -194,7 +194,10 @@ export async function saveCache(skills) {
         skills
     };
 
-    await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2));
+    // Atomic write: write to temp file first, then rename to avoid corruption
+    const tempFile = CACHE_FILE + '.tmp';
+    await fs.writeFile(tempFile, JSON.stringify(cache, null, 2));
+    await fs.rename(tempFile, CACHE_FILE);
     console.log(`💾 Saved ${skills.length} skills to cache`);
     return cache;
 }
