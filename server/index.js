@@ -330,6 +330,119 @@ app.get('/api/skills/:owner/:slug/stats', async (req, res) => {
 });
 
 /**
+ * GET /api/skills/:owner/:slug/files
+ * List files in skill directory from GitHub
+ */
+app.get('/api/skills/:owner/:slug/files', async (req, res) => {
+    try {
+        const { owner, slug } = req.params;
+        const skillPath = `skills/${owner}/${slug}`;
+        const treeUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${skillPath}`;
+
+        const token = process.env.GITHUB_TOKEN || null;
+        const headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'ClawHub-Clone'
+        };
+        if (token) headers['Authorization'] = `token ${token}`;
+
+        const response = await fetch(treeUrl, { headers });
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const items = await response.json();
+        const files = items.map(item => ({
+            name: item.name,
+            type: item.type, // 'file' or 'dir'
+            size: item.size || 0,
+            download_url: item.download_url,
+            path: item.path
+        }));
+
+        // Sort: directories first, then files, both alphabetically
+        files.sort((a, b) => {
+            if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+            return a.name.localeCompare(b.name);
+        });
+
+        res.json({ success: true, files });
+    } catch (error) {
+        console.error('Error fetching files:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/skills/:owner/:slug/files/:filename
+ * Get single file content from GitHub
+ */
+app.get('/api/skills/:owner/:slug/files/:filename', async (req, res) => {
+    try {
+        const { owner, slug, filename } = req.params;
+        const filePath = `skills/${owner}/${slug}/${filename}`;
+        const rawUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${filePath}`;
+
+        const token = process.env.GITHUB_TOKEN || null;
+        const headers = { 'User-Agent': 'ClawHub-Clone' };
+        if (token) headers['Authorization'] = `token ${token}`;
+
+        const response = await fetch(rawUrl, { headers });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch file: ${response.status}`);
+        }
+
+        const content = await response.text();
+        res.json({ success: true, name: filename, content });
+    } catch (error) {
+        console.error('Error fetching file:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/authors/:username
+ * Get author profile with all their skills
+ */
+app.get('/api/authors/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const cache = await getSkillsCache();
+        const downloads = await loadDownloads();
+
+        const authorSkills = (cache.skills || [])
+            .filter(s => s.owner === username)
+            .map(s => ({
+                ...s,
+                downloadCount: downloads[s.id]?.count || 0,
+                versionCount: (s.history || []).length
+            }))
+            .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+
+        if (authorSkills.length === 0) {
+            return res.status(404).json({ success: false, error: 'Author not found' });
+        }
+
+        const totalDownloads = authorSkills.reduce((sum, s) => sum + s.downloadCount, 0);
+
+        res.json({
+            success: true,
+            author: {
+                username,
+                avatarUrl: `https://github.com/${username}.png`,
+                githubUrl: `https://github.com/${username}`,
+                skillCount: authorSkills.length,
+                totalDownloads
+            },
+            skills: authorSkills
+        });
+    } catch (error) {
+        console.error('Error fetching author:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
  * POST /api/sync
  * Trigger full sync (development use)
  */

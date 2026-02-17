@@ -1697,7 +1697,7 @@ code {
 
 .theme-btn.active {
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   color: var(--ink);
 }
 
@@ -1836,7 +1836,7 @@ code {
 
 .view-btn.active {
   background: var(--surface);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   color: var(--ink);
 }
 
@@ -1943,5 +1943,336 @@ code {
 
   .theme-switcher {
     margin-left: 4px;
+  }
+}
+
+/* ============================================
+   Skill Tabs
+   ============================================ */
+
+.skill-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 24px;
+  margin-top: 8px;
+}
+
+.skill-tab {
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.skill-tab:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.skill-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.skill-tab-content {
+  min-height: 200px;
+}
+
+/* ============================================
+   File Browser
+   ============================================ */
+
+.file-browser {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-size: 0.9rem;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:hover {
+  background: var(--surface-muted);
+}
+
+.file-item.active {
+  background: rgba(255, 107, 74, 0.06);
+  border-left: 3px solid var(--accent);
+  padding-left: 13px;
+}
+
+.file-item.is-dir {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.file-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.file-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.file-size {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.file-content-panel {
+  border-top: 1px solid var(--line);
+  background: var(--surface-muted);
+  max-height: 500px;
+  overflow: auto;
+}
+
+.file-content-loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.file-content-code {
+  padding: 16px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre;
+  tab-size: 4;
+  overflow-x: auto;
+}
+
+/* ============================================
+   Versions List (Enhanced)
+   ============================================ */
+
+.versions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.version-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.version-card:hover {
+  border-color: rgba(255, 107, 74, 0.3);
+  box-shadow: 0 2px 8px rgba(29, 26, 23, 0.06);
+}
+
+.version-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.version-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.version-commit-link {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: all var(--transition-fast);
+}
+
+.version-commit-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.version-download-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.version-download-btn:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 2px 8px rgba(255, 107, 74, 0.3);
+}
+
+/* ============================================
+   Author Page
+   ============================================ */
+
+.author-page {
+  padding-top: 32px;
+  padding-bottom: 64px;
+}
+
+.author-profile {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 32px;
+  margin-bottom: 40px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.author-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.author-profile-info {
+  flex: 1;
+}
+
+.author-profile-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.author-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  margin-bottom: 16px;
+}
+
+.author-github-link:hover {
+  color: var(--accent);
+}
+
+.author-profile-stats {
+  display: flex;
+  gap: 28px;
+}
+
+.author-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.author-stat-label {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.author-skills-section {
+  margin-top: 32px;
+}
+
+.skill-author {
+  text-decoration: none;
+  color: inherit;
+  transition: color var(--transition-fast);
+}
+
+.skill-author:hover {
+  color: var(--accent);
+}
+
+/* ============================================
+   Responsive: Tabs + Author + Versions
+   ============================================ */
+
+@media (max-width: 768px) {
+  .skill-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .skill-tab {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .author-profile {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .author-profile-stats {
+    justify-content: center;
+  }
+
+  .version-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .version-card-right {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

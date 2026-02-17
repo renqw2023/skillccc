@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function SkillCard({ skill, viewMode = 'cards' }) {
     const {
@@ -59,10 +59,14 @@ function SkillCard({ skill, viewMode = 'cards' }) {
                 </p>
 
                 <div className="skill-footer">
-                    <div className="skill-author">
+                    <Link
+                        to={`/author/${owner}`}
+                        className="skill-author"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <span className="author-avatar">{getInitials(owner)}</span>
                         <span>{owner}</span>
-                    </div>
+                    </Link>
 
                     <div className="skill-metrics">
                         <span className="metric-item" title="Downloads">

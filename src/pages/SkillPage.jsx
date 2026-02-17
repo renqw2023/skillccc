@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { marked } from 'marked';
 import SkillInstallSection from '../components/SkillInstallSection';
+import FileBrowser from '../components/FileBrowser';
 
 function SkillPage() {
     const { owner, slug } = useParams();
     const [skill, setSkill] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
         const fetchSkill = async () => {
@@ -41,17 +43,28 @@ function SkillPage() {
         });
     };
 
+    const formatRelativeDate = (timestamp) => {
+        if (!timestamp) return '';
+        const now = Date.now();
+        const diff = now - timestamp;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        if (days === 0) return 'Today';
+        if (days === 1) return 'Yesterday';
+        if (days < 7) return `${days} days ago`;
+        if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+        if (days < 365) return `${Math.floor(days / 30)} months ago`;
+        return formatDate(timestamp);
+    };
+
     // Render markdown to HTML
     const renderMarkdown = (content) => {
         if (!content) return '';
-
-        // Configure marked
-        marked.setOptions({
-            breaks: true,
-            gfm: true
-        });
-
+        marked.setOptions({ breaks: true, gfm: true });
         return marked.parse(content);
+    };
+
+    const handleVersionDownload = (version) => {
+        window.open(`/api/skills/${owner}/${slug}/download?version=${version}`, '_blank');
     };
 
     if (loading) {
@@ -86,6 +99,14 @@ function SkillPage() {
         );
     }
 
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'files', label: 'Files' },
+        ...(skill.history && skill.history.length > 0
+            ? [{ id: 'versions', label: `Versions (${skill.history.length})` }]
+            : [])
+    ];
+
     return (
         <div className="skill-detail fade-in">
             <div className="container">
@@ -105,14 +126,12 @@ function SkillPage() {
                             <div className="skill-detail-meta">
                                 <div className="meta-item">
                                     <span>👤</span>
-                                    <a
-                                        href={`https://github.com/${skill.owner}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <Link
+                                        to={`/author/${skill.owner}`}
                                         className="meta-link"
                                     >
                                         {skill.owner}
-                                    </a>
+                                    </Link>
                                 </div>
 
                                 {skill.version && (
@@ -144,34 +163,82 @@ function SkillPage() {
                             )}
                         </header>
 
-                        {/* Version History */}
-                        {skill.history && skill.history.length > 0 && (
-                            <section className="skill-section">
-                                <h2 className="skill-section-title">Version History</h2>
-                                <div className="version-history">
+                        {/* Tab Navigation */}
+                        <div className="skill-tabs">
+                            {tabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    className={`skill-tab ${activeTab === tab.id ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="skill-tab-content">
+                            {/* Overview Tab */}
+                            {activeTab === 'overview' && (
+                                <>
+                                    {skill.body && (
+                                        <section className="markdown-content">
+                                            <div dangerouslySetInnerHTML={{ __html: renderMarkdown(skill.body) }} />
+                                        </section>
+                                    )}
+                                    {!skill.body && skill.readme && (
+                                        <section className="markdown-content">
+                                            <div dangerouslySetInnerHTML={{ __html: renderMarkdown(skill.readme) }} />
+                                        </section>
+                                    )}
+                                    {!skill.body && !skill.readme && (
+                                        <div className="empty-state">
+                                            <div className="empty-icon">📝</div>
+                                            <p>No documentation available</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Files Tab */}
+                            {activeTab === 'files' && (
+                                <FileBrowser owner={owner} slug={slug} />
+                            )}
+
+                            {/* Versions Tab */}
+                            {activeTab === 'versions' && skill.history && (
+                                <div className="versions-list">
                                     {skill.history.map((h, i) => (
-                                        <div key={i} className="version-item">
-                                            <span className="version-tag">v{h.version}</span>
-                                            <span className="version-date">{formatDate(h.publishedAt)}</span>
+                                        <div key={i} className="version-card">
+                                            <div className="version-card-left">
+                                                <span className="version-tag">v{h.version}</span>
+                                                <span className="version-date">{formatRelativeDate(h.publishedAt)}</span>
+                                            </div>
+                                            <div className="version-card-right">
+                                                {h.commit && (
+                                                    <a
+                                                        href={h.commit}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="version-commit-link"
+                                                        title="View commit"
+                                                    >
+                                                        🔗 Commit
+                                                    </a>
+                                                )}
+                                                <button
+                                                    className="version-download-btn"
+                                                    onClick={() => handleVersionDownload(h.version)}
+                                                    title={`Download v${h.version}`}
+                                                >
+                                                    📦 ZIP
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            </section>
-                        )}
-
-                        {/* Skill Documentation */}
-                        {skill.body && (
-                            <section className="markdown-content">
-                                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(skill.body) }} />
-                            </section>
-                        )}
-
-                        {/* README fallback */}
-                        {!skill.body && skill.readme && (
-                            <section className="markdown-content">
-                                <div dangerouslySetInnerHTML={{ __html: renderMarkdown(skill.readme) }} />
-                            </section>
-                        )}
+                            )}
+                        </div>
                     </div>
 
                     {/* Right: Install Section */}
