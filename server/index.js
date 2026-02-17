@@ -199,59 +199,74 @@ app.get('/api/skills/:owner/:slug/download', async (req, res) => {
         // Import archiver for creating ZIP
         const archiver = (await import('archiver')).default;
 
+        // Build authenticated headers
+        const token = process.env.GITHUB_TOKEN || null;
+        const githubHeaders = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'ClawHub-Clone'
+        };
+        if (token) githubHeaders['Authorization'] = `token ${token}`;
+
         // Fetch skill directory tree from GitHub API
         const skillPath = `skills/${owner}/${slug}`;
         const treeUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${skillPath}`;
 
-        const treeResponse = await fetch(treeUrl, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'ClawHub-Clone'
-            }
-        });
+        const treeResponse = await fetch(treeUrl, { headers: githubHeaders });
 
         if (!treeResponse.ok) {
-            throw new Error(`Failed to fetch skill files: ${treeResponse.statusText}`);
+            const errText = await treeResponse.text().catch(() => treeResponse.statusText);
+            throw new Error(`Failed to fetch skill files (${treeResponse.status}): ${errText}`);
         }
 
         const files = await treeResponse.json();
 
-        // Set response headers for ZIP download
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Disposition', `attachment; filename="${owner}-${slug}.zip"`);
+        // Collect all file buffers FIRST before sending response
+        // This avoids sending incomplete ZIP on partial failure
+        const fileBuffers = [];
+        const downloadHeaders = { 'User-Agent': 'ClawHub-Clone' };
+        if (token) downloadHeaders['Authorization'] = `token ${token}`;
 
-        // Create ZIP archive
-        const archive = archiver('zip', {
-            zlib: { level: 9 } // Maximum compression
-        });
-
-        // Pipe archive to response
-        archive.pipe(res);
-
-        // Download and add each file to the archive
         for (const file of files) {
-            if (file.type === 'file') {
+            if (file.type === 'file' && file.download_url) {
                 try {
-                    // Fetch file content
-                    const fileResponse = await fetch(file.download_url);
+                    const fileResponse = await fetch(file.download_url, {
+                        headers: downloadHeaders,
+                        signal: AbortSignal.timeout(15000) // 15s timeout per file
+                    });
                     if (fileResponse.ok) {
                         const fileBuffer = Buffer.from(await fileResponse.arrayBuffer());
-                        archive.append(fileBuffer, { name: file.name });
+                        fileBuffers.push({ name: file.name, buffer: fileBuffer });
+                    } else {
+                        console.warn(`⚠️ File ${file.name}: HTTP ${fileResponse.status}`);
                     }
                 } catch (err) {
-                    console.warn(`Failed to download file ${file.name}:`, err.message);
+                    console.warn(`⚠️ Failed to download file ${file.name}:`, err.message);
                 }
             }
         }
 
-        // Finalize archive
+        if (fileBuffers.length === 0) {
+            return res.status(500).json({ success: false, error: 'No files could be downloaded' });
+        }
+
+        // All files collected — now send ZIP
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${owner}-${slug}.zip"`);
+
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        archive.pipe(res);
+
+        for (const { name, buffer } of fileBuffers) {
+            archive.append(buffer, { name });
+        }
+
         await archive.finalize();
 
         // Increment download count
         const skillId = `${owner}/${slug}`;
         await incrementDownload(skillId);
 
-        console.log(`✅ Downloaded skill: ${owner}/${slug}`);
+        console.log(`✅ Downloaded skill: ${owner}/${slug} (${fileBuffers.length} files)`);
 
     } catch (error) {
         console.error('Error downloading skill:', error);
