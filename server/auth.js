@@ -41,9 +41,12 @@ export function registerAuthRoutes(app) {
         if (!GITHUB_CLIENT_ID) {
             return res.status(500).json({ success: false, error: 'GitHub OAuth not configured' });
         }
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/github/callback`;
+        // Use FRONTEND_URL for production (behind reverse proxy, req.protocol is http)
+        const baseUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
+        const redirectUri = `${baseUrl}/api/auth/github/callback`;
         const scope = 'read:user';
         const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}`;
+        console.log(`🔑 OAuth redirect_uri: ${redirectUri}`);
         res.redirect(url);
     });
 
