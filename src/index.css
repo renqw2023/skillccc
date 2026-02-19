@@ -612,6 +612,169 @@ code {
   }
 }
 
+/* Highlighted Card Top Row */
+.highlighted-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.highlighted-score {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.stat-author {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+/* ============================================
+   Security Scan Card
+   ============================================ */
+
+.security-card {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.security-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.security-icon {
+  font-size: 1.2rem;
+}
+
+.security-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.security-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.security-grade {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.grade-green {
+  color: #22c55e;
+}
+
+.grade-yellow {
+  color: #eab308;
+}
+
+.grade-orange {
+  color: #f97316;
+}
+
+.grade-red {
+  color: #ef4444;
+}
+
+.security-points {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.security-card.security-green {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.security-card.security-yellow {
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.security-card.security-orange {
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.security-card.security-red {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.security-findings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.security-finding {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+}
+
+.security-finding.severity-critical,
+.security-finding.severity-high {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.security-finding.severity-medium {
+  background: rgba(249, 115, 22, 0.08);
+  color: #f97316;
+}
+
+.security-finding.severity-low,
+.security-finding.severity-info {
+  background: rgba(234, 179, 8, 0.08);
+  color: #eab308;
+}
+
+.finding-label {
+  font-weight: 500;
+}
+
+.finding-points {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.security-clean {
+  font-size: 0.9rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+/* Dark mode security */
+[data-theme="dark"] .security-finding.severity-critical,
+[data-theme="dark"] .security-finding.severity-high {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .security-finding.severity-medium {
+  background: rgba(249, 115, 22, 0.15);
+}
+
+[data-theme="dark"] .security-finding.severity-low,
+[data-theme="dark"] .security-finding.severity-info {
+  background: rgba(234, 179, 8, 0.15);
+}
+
 /* ============================================
    Skill Detail Page
    ============================================ */

@@ -12,8 +12,9 @@ import cron from 'node-cron';
 import session from 'express-session';
 import { loadCache, fullSync, quickSync } from './github-sync.js';
 import { incrementDownload, loadDownloads, getDownloadStats } from './downloads.js';
-import { getDB, addStar, removeStar, getStarStatus, getUserStars, addComment, getComments, deleteComment, getCommentCount } from './db/index.js';
+import { getDB, addStar, removeStar, getStarStatus, getUserStars, addComment, getComments, deleteComment, getCommentCount, getAllStarCounts, getAllCommentCounts } from './db/index.js';
 import { attachUser, requireAuth, registerAuthRoutes } from './auth.js';
+import { scanSkill, batchScan } from './security-scanner.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -337,27 +338,71 @@ app.get('/api/stats', async (req, res) => {
 
 /**
  * GET /api/skills/highlighted
- * Get top 10 most downloaded skills
+ * Get highlighted skills with multi-dimensional scoring
+ * Score = downloads*3 + stars*5 + comments*2 + hasReadme*10
+ * Returns random 6 from top 50
  */
 app.get('/api/skills/highlighted', async (req, res) => {
     try {
         const cache = await getSkillsCache();
         const downloads = await loadDownloads();
+        const starCounts = getAllStarCounts();
+        const commentCounts = getAllCommentCounts();
 
-        // Merge download data with skills
-        const skillsWithDownloads = (cache.skills || []).map(skill => ({
-            ...skill,
-            downloadCount: downloads[skill.id]?.count || 0
-        }));
+        // Multi-dimensional scoring
+        const scored = (cache.skills || []).map(skill => {
+            const dl = downloads[skill.id]?.count || 0;
+            const stars = starCounts[skill.id] || 0;
+            const comments = commentCounts[skill.id] || 0;
+            const hasReadme = (skill.readme || skill.body) ? 1 : 0;
+            const score = dl * 3 + stars * 5 + comments * 2 + hasReadme * 10;
+            return {
+                ...skill,
+                downloadCount: dl,
+                starCount: stars,
+                commentCount: comments,
+                score
+            };
+        });
 
-        // Sort by download count and get top 10
-        const highlighted = skillsWithDownloads
-            .sort((a, b) => b.downloadCount - a.downloadCount)
-            .slice(0, 10);
+        // Get top 50 by score
+        scored.sort((a, b) => b.score - a.score);
+        const pool = scored.slice(0, 50);
+
+        // Random pick 6 from pool (Fisher-Yates shuffle)
+        const count = Math.min(6, pool.length);
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        const highlighted = pool.slice(0, count);
 
         res.json({ success: true, skills: highlighted });
     } catch (error) {
         console.error('Error fetching highlighted skills:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/skills/:owner/:slug/security
+ * Scan skill for security risks
+ */
+app.get('/api/skills/:owner/:slug/security', async (req, res) => {
+    try {
+        const { owner, slug } = req.params;
+        const skillId = `${owner}/${slug}`;
+        const cache = await getSkillsCache();
+        const skill = (cache.skills || []).find(s => s.id === skillId);
+
+        if (!skill) {
+            return res.status(404).json({ success: false, error: 'Skill not found' });
+        }
+
+        const report = scanSkill(skill);
+        res.json({ success: true, ...report });
+    } catch (error) {
+        console.error('Error scanning skill:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

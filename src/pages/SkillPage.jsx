@@ -21,6 +21,9 @@ function SkillPage() {
     const [starCount, setStarCount] = useState(0);
     const [starLoading, setStarLoading] = useState(false);
 
+    // Security state
+    const [security, setSecurity] = useState(null);
+
     useEffect(() => {
         const fetchSkill = async () => {
             setLoading(true);
@@ -50,6 +53,16 @@ function SkillPage() {
                 if (data.success) {
                     setStarred(data.starred);
                     setStarCount(data.count);
+                }
+            })
+            .catch(() => { });
+
+        // Fetch security scan
+        fetch(`${API_BASE}/api/skills/${owner}/${slug}/security`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setSecurity(data);
                 }
             })
             .catch(() => { });
@@ -305,9 +318,40 @@ function SkillPage() {
                         </div>
                     </div>
 
-                    {/* Right: Install Section */}
+                    {/* Right: Install Section + Security */}
                     <aside className="skill-detail-sidebar">
                         <SkillInstallSection skill={skill} />
+
+                        {/* Security Badge */}
+                        {security && (
+                            <div className={`security-card security-${security.color}`}>
+                                <div className="security-header">
+                                    <span className="security-icon">🛡️</span>
+                                    <span className="security-title">Security Scan</span>
+                                </div>
+                                <div className="security-score">
+                                    <span className={`security-grade grade-${security.color}`}>
+                                        {security.grade}
+                                    </span>
+                                    <span className="security-points">{security.score}/100</span>
+                                </div>
+                                {security.findings.length > 0 && (
+                                    <div className="security-findings">
+                                        {security.findings.map((f, i) => (
+                                            <div key={i} className={`security-finding severity-${f.severity}`}>
+                                                <span className="finding-label">{f.label}</span>
+                                                <span className="finding-points">{f.points}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {security.findings.length === 0 && (
+                                    <div className="security-clean">
+                                        ✅ No risks detected
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </aside>
                 </div>
             </div>

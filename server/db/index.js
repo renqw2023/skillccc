@@ -145,3 +145,19 @@ export function deleteComment(commentId, userId) {
 export function getCommentCount(skillId) {
     return db.prepare('SELECT COUNT(*) as count FROM comments WHERE skill_id = ?').get(skillId).count;
 }
+
+// ============ Batch Queries (for highlighted/ranking) ============
+
+export function getAllStarCounts() {
+    const rows = db.prepare('SELECT skill_id, COUNT(*) as count FROM stars GROUP BY skill_id').all();
+    const map = {};
+    for (const r of rows) map[r.skill_id] = r.count;
+    return map;
+}
+
+export function getAllCommentCounts() {
+    const rows = db.prepare('SELECT skill_id, COUNT(*) as count FROM comments GROUP BY skill_id').all();
+    const map = {};
+    for (const r of rows) map[r.skill_id] = r.count;
+    return map;
+}

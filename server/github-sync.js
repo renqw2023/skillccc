@@ -241,6 +241,7 @@ export async function fullSync(token = null) {
 /**
  * Quick sync: fetch only recent updates
  * If no paths provided, fetches recent commits to detect updates
+ * Also detects and removes stale (deleted) skills
  */
 export async function quickSync(paths = [], token = null) {
     console.log('⚡ Quick sync starting...');
@@ -248,6 +249,8 @@ export async function quickSync(paths = [], token = null) {
     const cache = await loadCache();
     const skillsMap = new Map(cache.skills.map(s => [s.id, s]));
     let updatedCount = 0;
+    let removedCount = 0;
+    const removedPaths = new Set();
 
     // If no paths specified, get recent commits from GitHub API
     if (paths.length === 0) {
@@ -269,7 +272,13 @@ export async function quickSync(paths = [], token = null) {
                             (filePath.endsWith('_meta.json') || filePath.endsWith('SKILL.md'))) {
                             const parts = filePath.split('/');
                             if (parts.length >= 3) {
-                                changedPaths.add(`${parts[1]}/${parts[2]}`);
+                                const skillId = `${parts[1]}/${parts[2]}`;
+                                // Track removed files for stale detection
+                                if (file.status === 'removed') {
+                                    removedPaths.add(skillId);
+                                } else {
+                                    changedPaths.add(skillId);
+                                }
                             }
                         }
                     }
@@ -277,8 +286,33 @@ export async function quickSync(paths = [], token = null) {
                 await sleep(100); // Rate limiting
             }
 
+            // Don't re-add skills that were only removed
+            for (const p of removedPaths) {
+                changedPaths.delete(p);
+            }
+
             paths = Array.from(changedPaths);
             console.log(`📦 Found ${paths.length} skills with recent updates`);
+
+            // Remove stale skills from cache
+            for (const staleId of removedPaths) {
+                if (skillsMap.has(staleId)) {
+                    // Verify it's truly gone by trying to fetch _meta.json
+                    try {
+                        const metaJson = await fetchRawFile(`${SKILLS_PATH}/${staleId}/_meta.json`, token);
+                        if (!metaJson) {
+                            skillsMap.delete(staleId);
+                            removedCount++;
+                            console.log(`🗑️ Removed stale skill: ${staleId}`);
+                        }
+                    } catch {
+                        skillsMap.delete(staleId);
+                        removedCount++;
+                        console.log(`🗑️ Removed stale skill: ${staleId}`);
+                    }
+                    await sleep(50);
+                }
+            }
 
         } catch (error) {
             console.warn('⚠️  Could not fetch recent commits, skipping quick sync:', error.message);
@@ -333,7 +367,7 @@ export async function quickSync(paths = [], token = null) {
     const skills = Array.from(skillsMap.values());
     const updatedCache = await saveCache(skills);
 
-    console.log(`✅ Quick sync completed: ${updatedCount} skills updated`);
+    console.log(`✅ Quick sync completed: ${updatedCount} updated, ${removedCount} removed`);
     return updatedCache;
 }
 

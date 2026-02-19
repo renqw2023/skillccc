@@ -36,9 +36,9 @@ function HighlightedSkills() {
     return (
         <section className="highlighted-section">
             <div className="highlighted-header">
-                <h2 className="highlighted-title">Highlighted skills</h2>
+                <h2 className="highlighted-title">🔥 Highlighted Skills</h2>
                 <p className="highlighted-subtitle">
-                    Curated signal — highlighted for quick trust.
+                    Community picks — based on downloads, stars, and engagement.
                 </p>
             </div>
 
@@ -49,7 +49,14 @@ function HighlightedSkills() {
                         to={`/skill/${skill.owner}/${skill.slug}`}
                         className="highlighted-card"
                     >
-                        <span className="highlighted-badge">Highlighted</span>
+                        <div className="highlighted-card-top">
+                            <span className="highlighted-badge">Highlighted</span>
+                            {skill.score > 0 && (
+                                <span className="highlighted-score" title="Engagement score">
+                                    🔥 {skill.score}
+                                </span>
+                            )}
+                        </div>
 
                         <h3 className="highlighted-skill-name">
                             {skill.displayName || skill.slug}
@@ -60,10 +67,16 @@ function HighlightedSkills() {
                         </p>
 
                         <div className="highlighted-stats">
-                            <span className="stat-item">
-                                ↓ {formatDownloads(skill.downloadCount)}
+                            <span className="stat-item" title="Downloads">
+                                ↓ {formatDownloads(skill.downloadCount || 0)}
                             </span>
-                            <span className="stat-item">
+                            <span className="stat-item" title="Stars">
+                                ★ {skill.starCount || 0}
+                            </span>
+                            <span className="stat-item" title="Comments">
+                                💬 {skill.commentCount || 0}
+                            </span>
+                            <span className="stat-item stat-author">
                                 by {skill.owner}
                             </span>
                         </div>
