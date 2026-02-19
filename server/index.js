@@ -3,21 +3,50 @@
  * Provides REST API for skills data
  */
 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
+import session from 'express-session';
 import { loadCache, fullSync, quickSync } from './github-sync.js';
 import { incrementDownload, loadDownloads, getDownloadStats } from './downloads.js';
+import { getDB, addStar, removeStar, getStarStatus, getUserStars, addComment, getComments, deleteComment, getCommentCount } from './db/index.js';
+import { attachUser, requireAuth, registerAuthRoutes } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Initialize database
+getDB();
+
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true
+}));
 app.use(express.json());
+
+// Session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-change-me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // set true in production with HTTPS
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    }
+}));
+
+// Attach user from session
+app.use(attachUser);
+
+// Register OAuth routes
+registerAuthRoutes(app);
+
 
 // GitHub Repository constants
 const REPO_OWNER = 'openclaw';
@@ -549,6 +578,85 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
+// ============ Star APIs ============
+
+/**
+ * POST /api/skills/:owner/:slug/star - Star a skill
+ */
+app.post('/api/skills/:owner/:slug/star', requireAuth, (req, res) => {
+    const skillId = `${req.params.owner}/${req.params.slug}`;
+    const added = addStar(req.user.id, skillId);
+    const status = getStarStatus(req.user.id, skillId);
+    res.json({ success: true, ...status });
+});
+
+/**
+ * DELETE /api/skills/:owner/:slug/star - Unstar a skill
+ */
+app.delete('/api/skills/:owner/:slug/star', requireAuth, (req, res) => {
+    const skillId = `${req.params.owner}/${req.params.slug}`;
+    removeStar(req.user.id, skillId);
+    const status = getStarStatus(req.user.id, skillId);
+    res.json({ success: true, ...status });
+});
+
+/**
+ * GET /api/skills/:owner/:slug/star - Get star status
+ */
+app.get('/api/skills/:owner/:slug/star', (req, res) => {
+    const skillId = `${req.params.owner}/${req.params.slug}`;
+    const userId = req.user?.id || null;
+    const status = getStarStatus(userId, skillId);
+    res.json({ success: true, ...status });
+});
+
+/**
+ * GET /api/user/stars - Get current user's starred skills
+ */
+app.get('/api/user/stars', requireAuth, (req, res) => {
+    const stars = getUserStars(req.user.id);
+    res.json({ success: true, stars });
+});
+
+// ============ Comment APIs ============
+
+/**
+ * GET /api/skills/:owner/:slug/comments - List comments
+ */
+app.get('/api/skills/:owner/:slug/comments', (req, res) => {
+    const skillId = `${req.params.owner}/${req.params.slug}`;
+    const page = parseInt(req.query.page) || 1;
+    const result = getComments(skillId, page);
+    res.json({ success: true, ...result });
+});
+
+/**
+ * POST /api/skills/:owner/:slug/comments - Add comment
+ */
+app.post('/api/skills/:owner/:slug/comments', requireAuth, (req, res) => {
+    const skillId = `${req.params.owner}/${req.params.slug}`;
+    const { content } = req.body;
+    if (!content || !content.trim()) {
+        return res.status(400).json({ success: false, error: 'Content is required' });
+    }
+    if (content.length > 2000) {
+        return res.status(400).json({ success: false, error: 'Comment too long (max 2000 chars)' });
+    }
+    const comment = addComment(req.user.id, skillId, content.trim());
+    res.json({ success: true, comment });
+});
+
+/**
+ * DELETE /api/comments/:id - Delete own comment
+ */
+app.delete('/api/comments/:id', requireAuth, (req, res) => {
+    const deleted = deleteComment(parseInt(req.params.id), req.user.id);
+    if (!deleted) {
+        return res.status(404).json({ success: false, error: 'Comment not found or not yours' });
+    }
+    res.json({ success: true });
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 API Server running at http://localhost:${PORT}`);
     console.log(`📚 API endpoints:`);

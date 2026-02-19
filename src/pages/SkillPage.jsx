@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { marked } from 'marked';
+import { useAuth } from '../contexts/AuthContext';
 import SkillInstallSection from '../components/SkillInstallSection';
 import FileBrowser from '../components/FileBrowser';
+import CommentSection from '../components/CommentSection';
+
+const API_BASE = 'http://localhost:3001';
 
 function SkillPage() {
     const { owner, slug } = useParams();
+    const { user, login } = useAuth();
     const [skill, setSkill] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+
+    // Star state
+    const [starred, setStarred] = useState(false);
+    const [starCount, setStarCount] = useState(0);
+    const [starLoading, setStarLoading] = useState(false);
 
     useEffect(() => {
         const fetchSkill = async () => {
@@ -32,7 +42,44 @@ function SkillPage() {
         };
 
         fetchSkill();
+
+        // Fetch star status
+        fetch(`${API_BASE}/api/skills/${owner}/${slug}/star`, { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setStarred(data.starred);
+                    setStarCount(data.count);
+                }
+            })
+            .catch(() => { });
     }, [owner, slug]);
+
+    const handleStar = async () => {
+        if (!user) {
+            login();
+            return;
+        }
+        if (starLoading) return;
+
+        setStarLoading(true);
+        try {
+            const method = starred ? 'DELETE' : 'POST';
+            const res = await fetch(`${API_BASE}/api/skills/${owner}/${slug}/star`, {
+                method,
+                credentials: 'include'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setStarred(data.starred);
+                setStarCount(data.count);
+            }
+        } catch (err) {
+            console.error('Star error:', err);
+        } finally {
+            setStarLoading(false);
+        }
+    };
 
     const formatDate = (timestamp) => {
         if (!timestamp) return 'Unknown';
@@ -104,7 +151,8 @@ function SkillPage() {
         { id: 'files', label: 'Files' },
         ...(skill.history && skill.history.length > 0
             ? [{ id: 'versions', label: `Versions (${skill.history.length})` }]
-            : [])
+            : []),
+        { id: 'comments', label: '💬 Comments' }
     ];
 
     return (
@@ -119,9 +167,20 @@ function SkillPage() {
                     {/* Left: Skill Info */}
                     <div className="skill-detail-main">
                         <header className="skill-detail-header">
-                            <h1 className="skill-detail-title">
-                                {skill.displayName || skill.slug}
-                            </h1>
+                            <div className="skill-title-row">
+                                <h1 className="skill-detail-title">
+                                    {skill.displayName || skill.slug}
+                                </h1>
+                                <button
+                                    className={`star-btn ${starred ? 'starred' : ''}`}
+                                    onClick={handleStar}
+                                    disabled={starLoading}
+                                    title={starred ? 'Unstar' : 'Star'}
+                                >
+                                    <span className="star-icon">{starred ? '★' : '☆'}</span>
+                                    <span className="star-count">{starCount}</span>
+                                </button>
+                            </div>
 
                             <div className="skill-detail-meta">
                                 <div className="meta-item">
@@ -237,6 +296,11 @@ function SkillPage() {
                                         </div>
                                     ))}
                                 </div>
+                            )}
+
+                            {/* Comments Tab */}
+                            {activeTab === 'comments' && (
+                                <CommentSection owner={owner} slug={slug} />
                             )}
                         </div>
                     </div>
