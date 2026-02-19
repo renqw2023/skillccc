@@ -23,6 +23,7 @@ function SkillPage() {
 
     // Security state
     const [security, setSecurity] = useState(null);
+    const [securityExpanded, setSecurityExpanded] = useState(false);
 
     useEffect(() => {
         const fetchSkill = async () => {
@@ -235,6 +236,49 @@ function SkillPage() {
                             )}
                         </header>
 
+                        {/* Security Scan - ClawHub style */}
+                        {security && (
+                            <div className={`security-scan-card scan-${security.statusColor}`}>
+                                <div className="scan-label">SECURITY SCAN</div>
+                                <div className="scan-row">
+                                    <span className="scan-source">🔍 SkillCCC</span>
+                                    <span className={`scan-status status-${security.statusColor}`}>
+                                        {security.status}
+                                    </span>
+                                    <span className="scan-confidence">{security.confidence}</span>
+                                </div>
+                                <p className="scan-summary">
+                                    {security.summary}
+                                    {security.findings.length > 0 && (
+                                        <button
+                                            className="scan-details-btn"
+                                            onClick={() => setSecurityExpanded(!securityExpanded)}
+                                        >
+                                            Details {securityExpanded ? '▲' : '▼'}
+                                        </button>
+                                    )}
+                                </p>
+                                {securityExpanded && security.details && (
+                                    <div className="scan-details">
+                                        {Object.entries(security.details).map(([cat, group]) => (
+                                            <div key={cat} className="scan-detail-group">
+                                                <div className="scan-detail-category">{group.categoryLabel}</div>
+                                                {group.items.map((item, i) => (
+                                                    <div key={i} className={`scan-detail-item severity-${item.severity}`}>
+                                                        <span>{item.label}</span>
+                                                        <span className="scan-detail-severity">{item.severity.toUpperCase()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <p className="scan-disclaimer">
+                                    Like a lobster shell, security has layers — review code before you run it.
+                                </p>
+                            </div>
+                        )}
+
                         {/* Tab Navigation */}
                         <div className="skill-tabs">
                             {tabs.map(tab => (
@@ -318,40 +362,9 @@ function SkillPage() {
                         </div>
                     </div>
 
-                    {/* Right: Install Section + Security */}
+                    {/* Right: Install Section */}
                     <aside className="skill-detail-sidebar">
                         <SkillInstallSection skill={skill} />
-
-                        {/* Security Badge */}
-                        {security && (
-                            <div className={`security-card security-${security.color}`}>
-                                <div className="security-header">
-                                    <span className="security-icon">🛡️</span>
-                                    <span className="security-title">Security Scan</span>
-                                </div>
-                                <div className="security-score">
-                                    <span className={`security-grade grade-${security.color}`}>
-                                        {security.grade}
-                                    </span>
-                                    <span className="security-points">{security.score}/100</span>
-                                </div>
-                                {security.findings.length > 0 && (
-                                    <div className="security-findings">
-                                        {security.findings.map((f, i) => (
-                                            <div key={i} className={`security-finding severity-${f.severity}`}>
-                                                <span className="finding-label">{f.label}</span>
-                                                <span className="finding-points">{f.points}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {security.findings.length === 0 && (
-                                    <div className="security-clean">
-                                        ✅ No risks detected
-                                    </div>
-                                )}
-                            </div>
-                        )}
                     </aside>
                 </div>
             </div>
