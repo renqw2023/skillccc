@@ -27,6 +27,12 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true
 }));
+
+// In production, also serve static frontend files
+if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(__dirname, '..', 'dist');
+    app.use(express.static(distPath));
+}
 app.use(express.json());
 
 // Session middleware

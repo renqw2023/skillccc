@@ -6,7 +6,7 @@ import SkillInstallSection from '../components/SkillInstallSection';
 import FileBrowser from '../components/FileBrowser';
 import CommentSection from '../components/CommentSection';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 function SkillPage() {
     const { owner, slug } = useParams();

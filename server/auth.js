@@ -106,13 +106,13 @@ export function registerAuthRoutes(app) {
 
             console.log(`✅ User logged in: ${githubUser.login}`);
 
-            // Redirect to frontend
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            // Redirect to frontend (use origin for same-domain, or FRONTEND_URL for dev proxy)
+            const frontendUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
             res.redirect(`${frontendUrl}?login=success`);
 
         } catch (error) {
             console.error('OAuth error:', error);
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const frontendUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
             res.redirect(`${frontendUrl}?login=error&message=${encodeURIComponent(error.message)}`);
         }
     });

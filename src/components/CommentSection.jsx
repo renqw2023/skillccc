@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = '';
 
 export default function CommentSection({ owner, slug }) {
     const { user, login } = useAuth();
