@@ -349,7 +349,7 @@ app.get('/api/skills/highlighted', async (req, res) => {
         const starCounts = getAllStarCounts();
         const commentCounts = getAllCommentCounts();
 
-        // Multi-dimensional scoring
+        // Multi-dimensional scoring (keep score calculation for display purposes)
         const scored = (cache.skills || []).map(skill => {
             const dl = downloads[skill.id]?.count || 0;
             const stars = starCounts[skill.id] || 0;
@@ -365,17 +365,16 @@ app.get('/api/skills/highlighted', async (req, res) => {
             };
         });
 
-        // Get top 50 by score
-        scored.sort((a, b) => b.score - a.score);
-        const pool = scored.slice(0, 50);
+        // 需求：改为按下载量最高排序，取前 3 个。如果下载量一样，按 score 排序兜底
+        scored.sort((a, b) => {
+            if (b.downloadCount !== a.downloadCount) {
+                return b.downloadCount - a.downloadCount;
+            }
+            return b.score - a.score;
+        });
 
-        // Random pick 6 from pool (Fisher-Yates shuffle)
-        const count = Math.min(6, pool.length);
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-        const highlighted = pool.slice(0, count);
+        // 直接取前 3
+        const highlighted = scored.slice(0, 3);
 
         res.json({ success: true, skills: highlighted });
     } catch (error) {

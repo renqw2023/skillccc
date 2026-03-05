@@ -1,6 +1,6 @@
 {
     "name": "@renwin/ccc",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "CLI tool for installing AI Agent Skills from www.ccc.onl",
     "type": "module",
     "main": "index.js",

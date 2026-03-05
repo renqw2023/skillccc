@@ -1,4 +1,9 @@
 import fetch from 'node-fetch';
+import ora from 'ora';
+import chalk from 'chalk';
+import path from 'path';
+import fs from 'fs/promises';
+import AdmZip from 'adm-zip';
 
 // Production API
 const API_BASE = 'https://www.ccc.onl/api';
